@@ -23,8 +23,10 @@ from statsmodels.tsa.stattools import adfuller
 # ---------------------------------------------------------------------------
 
 # Resolve path relative to *this* file so it works from any working directory
+# data_engine.py lives in backend/, but data/ is at the project root (one level up)
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH = os.path.join(_BASE_DIR, "data", "processed", "cleaned_fx_data.csv")
+_PROJECT_ROOT = os.path.dirname(_BASE_DIR)
+CSV_PATH = os.path.join(_PROJECT_ROOT, "data", "processed", "cleaned_fx_data.csv")
 
 # yfinance ticker symbols for the four currency pairs
 TICKERS = {
