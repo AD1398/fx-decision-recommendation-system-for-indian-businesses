@@ -48,12 +48,12 @@ const ExposureCalculator = ({ horizon = 7 }) => {
         try {
             const payload = { ...formData, horizon };
             // Standard exposure calculation
-            const response = await axios.post('http://localhost:5000/api/calculate-exposure', payload);
+            const response = await axios.post('/api/calculate-exposure', payload);
             if (response.data.error) throw new Error(response.data.error);
             setResult(response.data);
 
             // Prescriptive recommendation (parallel call)
-            const recResponse = await axios.post('http://localhost:5000/api/business-recommendation', payload);
+            const recResponse = await axios.post('/api/business-recommendation', payload);
             if (recResponse.data.error) throw new Error(recResponse.data.error);
             setRecommendation(recResponse.data);
         } catch (error) {
