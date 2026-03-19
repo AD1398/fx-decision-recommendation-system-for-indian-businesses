@@ -86,11 +86,17 @@ def dashboard():
 
         # Enrich with risk engine metrics for each currency
         if engine.df_master is not None:
+            df_filtered = engine.df_master
+            if target_date:
+                import pandas as pd
+                cutoff = pd.to_datetime(target_date)
+                df_filtered = df_filtered[df_filtered.index <= cutoff]
+
             risk_details = {}
             for currency in ['USD', 'GBP', 'EUR', 'JPY']:
                 try:
                     metrics = calculate_risk_metrics(
-                        engine.df_master, currency, exposure_usd=100000
+                        df_filtered, currency, exposure_usd=100000
                     )
                     risk_details[currency] = {
                         'z_score': metrics['z_score'],
@@ -160,19 +166,31 @@ def business_recommendation():
     business_type = body.get('type', 'Importer')
     target_margin = float(body.get('targetMargin', 5.0))
     horizon = int(body.get('horizon', 7))
+    target_date = body.get('date', None)
 
     try:
         engine.run_preprocessing()
         if engine.df_master is None:
             return jsonify({'error': 'Data engine not ready'}), 500
 
-        current_rate = float(engine.df_master[currency].iloc[-1])
+        df_filtered = engine.df_master
+        if target_date:
+            import pandas as pd
+            cutoff = pd.to_datetime(target_date)
+            df_filtered = df_filtered[df_filtered.index <= cutoff]
+
+        if df_filtered.empty:
+            return jsonify({'error': f'No data available before {target_date}'}), 400
+
+        current_rate = float(df_filtered[currency].iloc[-1])
 
         # Risk metrics
-        risk_metrics = calculate_risk_metrics(engine.df_master, currency, exposure_usd=deal_size)
+        risk_metrics = calculate_risk_metrics(df_filtered, currency, exposure_usd=deal_size)
 
         # Forecast
-        forecast = engine.get_forecast(currency=currency, days=horizon)
+        # pass df_filtered to forecast or let forecast handle date?
+        # forecast engine run_forecast takes target_date or df!
+        forecast = engine.get_forecast(currency=currency, days=horizon, target_date=target_date)
         if forecast is None or 'error' in forecast:
             return jsonify({'error': 'Forecast engine not ready'}), 500
 
